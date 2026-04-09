@@ -1,0 +1,10 @@
+{
+  "note": "Mapping này được suy ra theo bộ dữ liệu cassava 5 lớp phổ biến: CBB, CBSD, CGM, CMD, Healthy.",
+  "labels": [
+    "cassava_bacterial_blight",
+    "cassava_brown_streak_disease",
+    "cassava_green_mottle",
+    "cassava_mosaic_disease",
+    "healthy"
+  ]
+}

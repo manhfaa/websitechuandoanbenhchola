@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+server.out.log
+server.err.log
+uploads/originals/*
+uploads/processed/*
+!uploads/originals/.gitkeep
+!uploads/processed/.gitkeep

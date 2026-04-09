@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: websitechuandoanbenhchola
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: APP_NAME
+        value: LeafCare AI
+      - key: YOLO_MODEL_PATH
+        value: moduleyolola/best.pt
+      - key: CNN_MODEL_PATH
+        value: model_0.h5
+      - key: CNN_LABELS_PATH
+        value: config/cnn_labels.json
+      - key: YOLO_CONF_THRESHOLD
+        value: "0.25"
+      - key: CROP_PADDING_RATIO
+        value: "0.08"
+      - key: MAX_UPLOAD_SIZE_MB
+        value: "10"
+      - key: ALLOWED_EXTENSIONS
+        value: jpg,jpeg,png,webp
+      - key: CNN_PREPROCESS_MODE
+        value: efficientnet
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_API_KEY
+        sync: false
