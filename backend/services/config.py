@@ -25,6 +25,7 @@ class Settings:
     allowed_extensions: tuple[str, ...]
     cnn_preprocess_mode: str
     use_yolo: bool
+    use_cnn: bool
 
     def ensure_runtime_directories(self) -> None:
         (self.upload_dir / "originals").mkdir(parents=True, exist_ok=True)
@@ -39,6 +40,7 @@ def get_settings() -> Settings:
     )
 
     use_yolo = os.getenv("USE_YOLO", "0").strip().lower() in {"1", "true", "yes", "on"}
+    use_cnn = os.getenv("USE_CNN", "0").strip().lower() in {"1", "true", "yes", "on"}
 
     return Settings(
         app_name=os.getenv("APP_NAME", "LeafCare AI"),
@@ -55,4 +57,5 @@ def get_settings() -> Settings:
         allowed_extensions=allowed_extensions,
         cnn_preprocess_mode=os.getenv("CNN_PREPROCESS_MODE", "efficientnet").strip().lower(),
         use_yolo=use_yolo,
+        use_cnn=use_cnn,
     )

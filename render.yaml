@@ -30,6 +30,8 @@ services:
         value: efficientnet
       - key: USE_YOLO
         value: "0"
+      - key: USE_CNN
+        value: "0"
       - key: OPENAI_MODEL
         value: gpt-4o-mini
       - key: FRONTEND_ORIGIN

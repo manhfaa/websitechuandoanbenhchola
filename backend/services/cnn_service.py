@@ -67,6 +67,11 @@ class CnnClassificationService:
         ]
 
     def classify(self, image_path: Path) -> dict:
+        if not self.settings.use_cnn:
+            return self._fallback_classification(
+                "CNN dang tat tren goi free de tranh vuot gioi han bo nho Render."
+            )
+
         np, tf = self._load_tensorflow()
         model = self._load_model()
 
