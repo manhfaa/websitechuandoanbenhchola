@@ -189,7 +189,7 @@ function clearResults() {
 async function loadHealth() {
   try {
     const response = await fetch(buildApiUrl("/api/health"));
-    const data = await response.json();
+    const data = await readJsonResponse(response, "Khong doc duoc trang thai backend.");
     const dependencies = data.dependencies;
 
     elements.serverStatus.textContent = "San sang";
@@ -338,7 +338,7 @@ async function analyzeImage() {
       method: "POST",
       body: formData,
     });
-    const payload = await response.json();
+    const payload = await readJsonResponse(response, "Backend khong tra ve JSON hop le.");
 
     if (!response.ok || !payload.success) {
       throw new Error(payload.error || "Khong the phan tich anh.");
@@ -464,6 +464,21 @@ function hideBanner() {
 
 function buildApiUrl(path) {
   return `${API_BASE_URL}${path}`;
+}
+
+async function readJsonResponse(response, fallbackMessage) {
+  const contentType = (response.headers.get("content-type") || "").toLowerCase();
+  const bodyText = await response.text();
+
+  if (!contentType.includes("application/json")) {
+    throw new Error(`${fallbackMessage} API dang tra ve ${contentType || "du lieu khong xac dinh"}.`);
+  }
+
+  try {
+    return JSON.parse(bodyText);
+  } catch {
+    throw new Error(fallbackMessage);
+  }
 }
 
 init();
