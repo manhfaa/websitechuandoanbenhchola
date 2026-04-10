@@ -83,11 +83,12 @@ def health() -> tuple[dict, int]:
 @app.post("/api/analyze")
 def analyze() -> tuple[dict, int]:
     image = request.files.get("image")
+    symptoms = request.form.get("symptoms", "").strip()
     if image is None or not image.filename:
         return jsonify({"success": False, "error": "Vui lòng tải lên một ảnh lá cây."}), 400
 
     try:
-        result = pipeline.analyze_upload(image)
+        result = pipeline.analyze_upload(image, symptoms)
     except AppError as exc:
         return jsonify({"success": False, "error": str(exc)}), exc.status_code
     except Exception:
@@ -129,3 +130,4 @@ if __name__ == "__main__":
         port=int(os.getenv("PORT", "5000")),
         debug=os.getenv("FLASK_DEBUG", "0") == "1",
     )
+

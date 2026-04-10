@@ -104,6 +104,19 @@
             <img id="previewImage" class="preview-image is-empty" alt="Xem trước ảnh lá cây" />
           </div>
 
+          <section class="symptom-box">
+            <label for="symptomsInput">Trieu chung ban quan sat duoc</label>
+            <textarea
+              id="symptomsInput"
+              rows="4"
+              maxlength="600"
+              placeholder="Vi du: la vang o ria, co dom nau tron, mat duoi la co vet uot, cay cham lon..."
+            ></textarea>
+            <p class="helper-text">
+              Thong tin nay se duoc ket hop cung ket qua CNN de ChatGPT goi y giai phap sat hon.
+            </p>
+          </section>
+
           <div class="action-row">
             <button id="analyzeButton" class="primary-button" type="button" disabled>
               Phân tích ngay
@@ -218,3 +231,6 @@
     <script src="./static/js/app.js"></script>
   </body>
 </html>
+
+
+

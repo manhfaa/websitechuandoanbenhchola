@@ -10,16 +10,16 @@ class LlmAdviceService:
     def __init__(self, settings: Settings):
         self.settings = settings
 
-    def generate(self, detection: dict, classification: dict) -> dict:
+    def generate(self, detection: dict, classification: dict, symptoms: str = "") -> dict:
         if not self.settings.openai_api_key:
-            return self._fallback_report(classification, "Chưa cấu hình OPENAI_API_KEY.")
+            return self._fallback_report(classification, "Chua cau hinh OPENAI_API_KEY.")
 
         try:
             from openai import OpenAI
         except ModuleNotFoundError:
-            return self._fallback_report(classification, "Thiếu thư viện openai trong môi trường.")
+            return self._fallback_report(classification, "Thieu thu vien openai trong moi truong.")
 
-        prompt = self._build_prompt(detection, classification)
+        prompt = self._build_prompt(detection, classification, symptoms)
         client = OpenAI(api_key=self.settings.openai_api_key)
 
         try:
@@ -30,9 +30,9 @@ class LlmAdviceService:
                     {
                         "role": "system",
                         "content": (
-                            "Bạn là chuyên gia hỗ trợ nhận diện bệnh lá cây. "
-                            "Bạn chỉ được suy luận từ dữ liệu YOLO và CNN do hệ thống cung cấp. "
-                            "Không khẳng định chắc chắn 100%, luôn nhắc người dùng quan sát thêm."
+                            "Ban la chuyen gia ho tro nhan dien benh la cay. "
+                            "Ban chi duoc suy luan tu du lieu YOLO va CNN do he thong cung cap. "
+                            "Khong khang dinh chac chan 100%, luon nhac nguoi dung quan sat them."
                         ),
                     },
                     {"role": "user", "content": prompt},
@@ -43,7 +43,7 @@ class LlmAdviceService:
             return {
                 "source": "chatgpt",
                 "model": self.settings.openai_model,
-                "headline": parsed.get("headline", "Đã tạo nhận xét từ ChatGPT."),
+                "headline": parsed.get("headline", "Da tao nhan xet tu ChatGPT."),
                 "summary": parsed.get("summary", "").strip(),
                 "care_steps": parsed.get("care_steps", []),
                 "next_steps": parsed.get("next_steps", []),
@@ -52,31 +52,35 @@ class LlmAdviceService:
         except Exception as exc:
             return self._fallback_report(
                 classification,
-                f"ChatGPT tạm thời không phản hồi, hệ thống dùng gợi ý mặc định. Chi tiết: {exc}",
+                f"ChatGPT tam thoi khong phan hoi, he thong dung goi y mac dinh. Chi tiet: {exc}",
             )
 
-    def _build_prompt(self, detection: dict, classification: dict) -> str:
+    def _build_prompt(self, detection: dict, classification: dict, symptoms: str) -> str:
         top_predictions = "\n".join(
             f"- {item['display_label']}: {item['confidence'] * 100:.2f}%"
             for item in classification["top_predictions"]
         )
+        symptoms_text = symptoms if symptoms else "Khong co mo ta trieu chung bo sung."
+
         return f"""
-Hãy trả về JSON hợp lệ với đúng các khóa:
+Hay tra ve JSON hop le voi dung cac khoa:
 headline, summary, care_steps, next_steps, warning
 
-Yêu cầu:
-- Viết bằng tiếng Việt, ngắn gọn, dễ hiểu với người dùng phổ thông.
-- summary dài 2-3 câu.
-- care_steps là mảng 3-4 ý hành động thực tế.
-- next_steps là mảng 2-3 ý quan sát tiếp theo.
-- warning là 1 câu nhắc đây chỉ là gợi ý từ mô hình AI.
+Yeu cau:
+- Viet bang tieng Viet, ngan gon, de hieu voi nguoi dung pho thong.
+- summary dai 2-3 cau.
+- care_steps la mang 3-4 y hanh dong thuc te.
+- next_steps la mang 2-3 y quan sat tiep theo.
+- warning la 1 cau nhac day chi la goi y tu mo hinh AI.
 
-Dữ liệu đầu vào:
-- YOLO tìm thấy lá: {"có" if detection["found"] else "không"}
-- Độ tin cậy YOLO: {detection["confidence"] * 100:.2f}%
-- Kết quả CNN tốt nhất: {classification["display_label"]}
-- Độ tin cậy CNN: {classification["confidence"] * 100:.2f}%
-- Top dự đoán:
+Du lieu dau vao:
+- YOLO tim thay la: {"co" if detection["found"] else "khong"}
+- Do tin cay YOLO: {detection["confidence"] * 100:.2f}%
+- Ket qua CNN tot nhat: {classification["display_label"]}
+- Do tin cay CNN: {classification["confidence"] * 100:.2f}%
+- Trieu chung nguoi dung mo ta:
+{symptoms_text}
+- Top du doan:
 {top_predictions}
 """.strip()
 
@@ -111,20 +115,20 @@ Dữ liệu đầu vào:
         return {
             "source": "fallback",
             "model": "local-template",
-            "headline": f"Kết quả gần nhất: {label}",
+            "headline": f"Ket qua gan nhat: {label}",
             "summary": (
-                f"CNN đang nghiêng về lớp '{label}' với độ tin cậy khoảng {confidence:.1f}%. "
-                "Bạn nên xem đây là gợi ý ban đầu để kiểm tra lá và điều kiện chăm sóc thực tế."
+                f"CNN dang nghieng ve lop '{label}' voi do tin cay khoang {confidence:.1f}%. "
+                "Ban nen xem day la goi y ban dau de kiem tra la va dieu kien cham soc thuc te."
             ),
             "care_steps": [
-                "Tách riêng cây có dấu hiệu bất thường để hạn chế lây lan.",
-                "Kiểm tra lại mặt trên, mặt dưới lá và chụp thêm ảnh sáng rõ nếu cần.",
-                "Điều chỉnh tưới nước, ánh sáng và độ thông thoáng quanh cây.",
-                "Loại bỏ phần lá hư nặng nếu cây đã bị tổn thương rõ rệt.",
+                "Tach rieng cay co dau hieu bat thuong de han che lay lan.",
+                "Kiem tra lai mat tren, mat duoi la va chup them anh sang ro neu can.",
+                "Dieu chinh tuoi nuoc, anh sang va do thong thoang quanh cay.",
+                "Loai bo phan la hu nang neu cay da bi ton thuong ro ret.",
             ],
             "next_steps": [
-                "Theo dõi sự thay đổi của đốm lá trong 3-5 ngày tiếp theo.",
-                "So sánh thêm với ảnh chuẩn hoặc hỏi cán bộ nông nghiệp khi cần.",
+                "Theo doi su thay doi cua dom la trong 3-5 ngay tiep theo.",
+                "So sanh them voi anh chuan hoac hoi can bo nong nghiep khi can.",
             ],
             "warning": reason,
         }

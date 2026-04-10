@@ -19,6 +19,7 @@ const elements = {
   openCameraButton: document.getElementById("openCameraButton"),
   captureButton: document.getElementById("captureButton"),
   closeCameraButton: document.getElementById("closeCameraButton"),
+  symptomsInput: document.getElementById("symptomsInput"),
   cameraShell: document.getElementById("cameraShell"),
   cameraVideo: document.getElementById("cameraStream"),
   cameraHelper: document.getElementById("cameraHelper"),
@@ -156,6 +157,7 @@ function resetForm() {
 
   state.previewUrl = "";
   elements.fileInput.value = "";
+  elements.symptomsInput.value = "";
   elements.fileName.textContent = "Chua chon anh";
   elements.previewImage.removeAttribute("src");
   elements.previewImage.classList.add("is-empty");
@@ -332,6 +334,7 @@ async function analyzeImage() {
 
   const formData = new FormData();
   formData.append("image", state.file);
+  formData.append("symptoms", (elements.symptomsInput?.value || "").trim());
 
   try {
     const response = await fetch(buildApiUrl("/api/analyze"), {

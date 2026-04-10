@@ -22,7 +22,7 @@ class AnalysisPipeline:
         self.cnn = CnnClassificationService(settings)
         self.llm = LlmAdviceService(settings)
 
-    def analyze_upload(self, upload: FileStorage) -> dict:
+    def analyze_upload(self, upload: FileStorage, symptoms: str = "") -> dict:
         original_path = self._save_upload(upload)
         processed_dir = self.settings.upload_dir / "processed"
 
@@ -36,7 +36,7 @@ class AnalysisPipeline:
         cnn_ms = round((time.perf_counter() - cnn_started) * 1000, 2)
 
         llm_started = time.perf_counter()
-        llm_report = self.llm.generate(detection, classification)
+        llm_report = self.llm.generate(detection, classification, symptoms=symptoms)
         llm_ms = round((time.perf_counter() - llm_started) * 1000, 2)
 
         total_ms = round((time.perf_counter() - started_at) * 1000, 2)
@@ -78,6 +78,7 @@ class AnalysisPipeline:
             },
             "classification": classification,
             "llm": llm_report,
+            "input": {"symptoms": symptoms},
             "meta": {"total_duration_ms": total_ms},
         }
 
