@@ -18,6 +18,9 @@ class YoloLeafService:
         self.settings = settings
 
     def _load_model(self):
+        if not self.settings.use_yolo:
+            return None
+
         if not self.settings.yolo_model_path.exists():
             return None
 

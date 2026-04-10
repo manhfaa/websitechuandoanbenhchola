@@ -5,7 +5,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn --timeout 120 app:app
     healthCheckPath: /api/health
     envVars:
       - key: PYTHON_VERSION
@@ -28,6 +28,8 @@ services:
         value: jpg,jpeg,png,webp
       - key: CNN_PREPROCESS_MODE
         value: efficientnet
+      - key: USE_YOLO
+        value: "0"
       - key: OPENAI_MODEL
         value: gpt-4o-mini
       - key: FRONTEND_ORIGIN

@@ -24,6 +24,7 @@ class Settings:
     max_upload_size_mb: int
     allowed_extensions: tuple[str, ...]
     cnn_preprocess_mode: str
+    use_yolo: bool
 
     def ensure_runtime_directories(self) -> None:
         (self.upload_dir / "originals").mkdir(parents=True, exist_ok=True)
@@ -36,6 +37,8 @@ def get_settings() -> Settings:
         for ext in os.getenv("ALLOWED_EXTENSIONS", "jpg,jpeg,png,webp").split(",")
         if ext.strip()
     )
+
+    use_yolo = os.getenv("USE_YOLO", "0").strip().lower() in {"1", "true", "yes", "on"}
 
     return Settings(
         app_name=os.getenv("APP_NAME", "LeafCare AI"),
@@ -51,4 +54,5 @@ def get_settings() -> Settings:
         max_upload_size_mb=int(os.getenv("MAX_UPLOAD_SIZE_MB", "10")),
         allowed_extensions=allowed_extensions,
         cnn_preprocess_mode=os.getenv("CNN_PREPROCESS_MODE", "efficientnet").strip().lower(),
+        use_yolo=use_yolo,
     )
