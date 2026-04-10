@@ -189,6 +189,87 @@ img {
   font-size: 1.45rem;
 }
 
+.capture-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid rgba(28, 111, 59, 0.12);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(228, 246, 232, 0.82), rgba(255, 255, 255, 0.92));
+}
+
+.capture-intro strong {
+  display: inline-block;
+  font-size: 1rem;
+}
+
+.capture-intro p {
+  max-width: 620px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.capture-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.camera-shell {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(23, 102, 54, 0.14);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(232, 246, 235, 0.94)),
+    #f8fff7;
+}
+
+.camera-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top, rgba(50, 142, 83, 0.18), transparent 42%),
+    #0f261a;
+}
+
+.camera-feed {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #0f261a;
+}
+
+.camera-overlay {
+  position: absolute;
+  inset: auto 14px 14px 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.camera-overlay span {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(11, 31, 21, 0.74);
+  color: #f2fff4;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.camera-helper {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .ghost-button,
 .primary-button {
   cursor: pointer;
@@ -202,6 +283,11 @@ img {
   background: rgba(33, 122, 68, 0.08);
   color: var(--green-700);
   font-weight: 700;
+}
+
+.ghost-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .primary-button {
@@ -554,6 +640,7 @@ img {
     padding: 20px;
   }
 
+  .capture-intro,
   .section-head,
   .action-row,
   .preview-head,

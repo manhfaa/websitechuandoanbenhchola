@@ -8,6 +8,11 @@ Web app chan doan benh la cay theo pipeline:
 2. CNN (`model_0.h5`) phan loai benh.
 3. ChatGPT API sinh mo ta va goi y cham soc.
 
+Frontend hien ho tro 2 cach dua anh vao he thong:
+
+- Tai file anh tu may
+- Mo camera tren trinh duyet va chup anh truc tiep
+
 ## Cong nghe
 
 - Frontend: HTML, CSS, JavaScript thuan
@@ -37,6 +42,8 @@ python app.py
 
 Mo trinh duyet tai `http://localhost:5000`
 
+Luu y: tinh nang camera tren web chi hoat dong khi chay bang `localhost` hoac qua domain `HTTPS` nhu Render.
+
 ## Cau truc chinh
 
 - `app.py`: route Flask va API upload/phan tich
@@ -45,7 +52,7 @@ Mo trinh duyet tai `http://localhost:5000`
 - `services/llm_service.py`: goi ChatGPT API hoac fallback local
 - `templates/index.html`: giao dien
 - `static/css/styles.css`: style
-- `static/js/app.js`: upload, goi API, render ket qua
+- `static/js/app.js`: upload, camera, goi API, render ket qua
 
 ## Deploy Render
 
@@ -58,6 +65,9 @@ Project da co san `render.yaml` va `.python-version`.
 3. Chon repo `websitechuandoanbenhchola`.
 4. Khi Render hoi secret, nhap `OPENAI_API_KEY`.
 5. Sau khi deploy xong, kiem tra `/api/health`.
+6. Camera tren giao dien se hoat dong vi Render cung cap HTTPS cho web service.
+
+Neu service Render da lien ket voi repo GitHub nay, moi lan push len nhanh `main` se tu dong trigger redeploy.
 
 ### Bao mat
 

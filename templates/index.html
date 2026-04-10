@@ -52,6 +52,37 @@
             <button class="ghost-button" id="resetButton" type="button">Đặt lại</button>
           </div>
 
+          <div class="capture-intro">
+            <div>
+              <strong>Chon cach dua anh vao he thong</strong>
+              <p>Ban co the tai anh co san hoac mo camera de chup truc tiep ngay tren giao dien nay.</p>
+            </div>
+            <div class="capture-actions">
+              <button class="ghost-button" id="openCameraButton" type="button">Mo camera</button>
+              <button class="ghost-button hidden" id="captureButton" type="button">Chup anh</button>
+              <button class="ghost-button hidden" id="closeCameraButton" type="button">Tat camera</button>
+            </div>
+          </div>
+
+          <section class="camera-shell hidden" id="cameraShell" aria-live="polite">
+            <div class="camera-stage">
+              <video
+                id="cameraStream"
+                class="camera-feed"
+                autoplay
+                playsinline
+                muted
+              ></video>
+              <div class="camera-overlay">
+                <span>Can giua la chinh trong khung de he thong doc ro hon.</span>
+              </div>
+            </div>
+            <p class="camera-helper" id="cameraHelper">
+              Camera se hoat dong tot tren localhost va ban Render da bat HTTPS.
+            </p>
+            <canvas id="captureCanvas" hidden></canvas>
+          </section>
+
           <label class="dropzone" id="dropzone" for="fileInput">
             <input id="fileInput" type="file" accept="image/*" hidden />
             <div class="dropzone-icon">
