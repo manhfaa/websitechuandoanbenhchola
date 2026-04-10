@@ -1,13 +1,14 @@
 .env
+backend/.env
 .venv/
 __pycache__/
 *.pyc
 server.out.log
 server.err.log
-uploads/originals/*
-uploads/processed/*
-!uploads/originals/.gitkeep
-!uploads/processed/.gitkeep
+backend/uploads/originals/*
+backend/uploads/processed/*
+!backend/uploads/originals/.gitkeep
+!backend/uploads/processed/.gitkeep
 
 # Browser automation and Screenshots
 .chrome-automation/

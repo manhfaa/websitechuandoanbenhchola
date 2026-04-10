@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 import importlib.util
 
-from flask import Flask, jsonify, render_template, request, send_from_directory, url_for
+from flask import Flask, jsonify, request, send_from_directory, url_for
+from flask_cors import CORS
 from werkzeug.exceptions import RequestEntityTooLarge
 
 from services.config import get_settings
@@ -11,19 +12,24 @@ from services.pipeline import AnalysisPipeline
 
 
 settings = get_settings()
-app = Flask(
-    __name__,
-    template_folder=str(settings.base_dir / "templates"),
-    static_folder=str(settings.base_dir / "static"),
-)
+settings.ensure_runtime_directories()
+app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = settings.max_upload_size_mb * 1024 * 1024
+frontend_origin = os.getenv("FRONTEND_ORIGIN", "*")
+CORS(
+    app,
+    resources={
+        r"/api/*": {"origins": frontend_origin},
+        r"/uploads/*": {"origins": frontend_origin},
+    },
+)
 pipeline = AnalysisPipeline(settings)
 
 
 def asset_url(relative_path: str | None) -> str | None:
     if not relative_path:
         return None
-    return url_for("uploaded_file", filename=relative_path)
+    return url_for("uploaded_file", filename=relative_path, _external=True)
 
 
 def attach_urls(payload: dict) -> dict:
@@ -37,8 +43,17 @@ def attach_urls(payload: dict) -> dict:
 
 
 @app.get("/")
-def index() -> str:
-    return render_template("index.html", app_name=settings.app_name)
+def index() -> tuple[dict, int]:
+    return (
+        jsonify(
+            {
+                "status": "ok",
+                "service": "leafcare-backend",
+                "message": "Use /api/health and /api/analyze from frontend.",
+            }
+        ),
+        200,
+    )
 
 
 @app.get("/api/health")

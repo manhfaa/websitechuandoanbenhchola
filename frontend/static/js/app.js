@@ -4,6 +4,11 @@ const state = {
   mediaStream: null,
 };
 
+const API_BASE_URL = String(window.APP_CONFIG?.API_BASE_URL || window.location.origin).replace(
+  /\/$/,
+  ""
+);
+
 const elements = {
   fileInput: document.getElementById("fileInput"),
   dropzone: document.getElementById("dropzone"),
@@ -183,7 +188,7 @@ function clearResults() {
 
 async function loadHealth() {
   try {
-    const response = await fetch("/api/health");
+    const response = await fetch(buildApiUrl("/api/health"));
     const data = await response.json();
     const dependencies = data.dependencies;
 
@@ -329,7 +334,7 @@ async function analyzeImage() {
   formData.append("image", state.file);
 
   try {
-    const response = await fetch("/api/analyze", {
+    const response = await fetch(buildApiUrl("/api/analyze"), {
       method: "POST",
       body: formData,
     });
@@ -455,6 +460,10 @@ function showBanner(message, type) {
 function hideBanner() {
   elements.messageBanner.textContent = "";
   elements.messageBanner.className = "message-banner hidden";
+}
+
+function buildApiUrl(path) {
+  return `${API_BASE_URL}${path}`;
 }
 
 init();

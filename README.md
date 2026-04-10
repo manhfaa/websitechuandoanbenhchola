@@ -1,38 +1,33 @@
-# LeafAI
+# LeafCare AI (Split Frontend + Backend)
 
-Repo deploy: `websitechuandoanbenhchola`
+Du an da duoc tach thanh 2 phan de deploy rieng tren Render, giup giam kich thuoc moi service (phu hop gioi han 512 MB):
 
-Web app chan doan benh la cay theo pipeline:
+- `backend/`: Flask API + model YOLO/CNN + xu ly anh
+- `frontend/`: giao dien HTML/CSS/JS goi API backend
 
-1. YOLO (`moduleyolola/best.pt`) tim vung la.
-2. CNN (`model_0.h5`) phan loai benh.
-3. ChatGPT API sinh mo ta va goi y cham soc.
+## Kien truc
 
-Frontend hien ho tro 2 cach dua anh vao he thong:
+1. Frontend goi `GET /api/health` de kiem tra trang thai.
+2. Frontend goi `POST /api/analyze` de upload anh.
+3. Backend tra ket qua va URL anh xu ly tai `/uploads/...`.
 
-- Tai file anh tu may
-- Mo camera tren trinh duyet va chup anh truc tiep
+## Cau truc thu muc
 
-## Cong nghe
-
-- Frontend: HTML, CSS, JavaScript thuan
-- Backend: Flask
-- Inference: Ultralytics YOLO + TensorFlow/Keras
-
-## Luu y moi truong
-
-- Nen dung Python `3.11.x`
-- `model_0.h5` co 5 lop dau ra
-- `config/cnn_labels.json` dang map theo bo cassava 5 lop pho bien:
-  - `cassava_bacterial_blight`
-  - `cassava_brown_streak_disease`
-  - `cassava_green_mottle`
-  - `cassava_mosaic_disease`
-  - `healthy`
+- `backend/app.py`: API Flask (khong render template)
+- `backend/services/*`: pipeline YOLO -> CNN -> LLM
+- `backend/model_0.h5`: CNN model
+- `backend/moduleyolola/best.pt`: YOLO model
+- `frontend/index.html`: UI
+- `frontend/static/js/config.js`: cau hinh URL backend
+- `frontend/static/js/app.js`: logic upload/camera/goi API
+- `render.yaml`: blueprint deploy 2 service tren Render
 
 ## Chay local
 
+### 1) Backend
+
 ```bash
+cd backend
 py -3.11 -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
@@ -40,37 +35,41 @@ copy .env.example .env
 python app.py
 ```
 
-Mo trinh duyet tai `http://localhost:5000`
+Backend mac dinh: `http://localhost:5000`
 
-Luu y: tinh nang camera tren web chi hoat dong khi chay bang `localhost` hoac qua domain `HTTPS` nhu Render.
+### 2) Frontend
 
-## Cau truc chinh
+Sua file `frontend/static/js/config.js`:
 
-- `app.py`: route Flask va API upload/phan tich
-- `services/yolo_service.py`: phat hien va crop vung la
-- `services/cnn_service.py`: load `model_0.h5` va phan loai
-- `services/llm_service.py`: goi ChatGPT API hoac fallback local
-- `templates/index.html`: giao dien
-- `static/css/styles.css`: style
-- `static/js/app.js`: upload, camera, goi API, render ket qua
+```js
+window.APP_CONFIG = {
+  API_BASE_URL: "http://localhost:5000",
+};
+```
 
-## Deploy Render
+Mo file `frontend/index.html` bang live server hoac bat ky static server nao.
 
-Project da co san `render.yaml` va `.python-version`.
+## Deploy Render tu A-Z
 
-### Cach deploy
-
-1. Push repo nay len GitHub.
+1. Push toan bo repo len GitHub.
 2. Tren Render, chon `New +` -> `Blueprint`.
-3. Chon repo `websitechuandoanbenhchola`.
-4. Khi Render hoi secret, nhap `OPENAI_API_KEY`.
-5. Sau khi deploy xong, kiem tra `/api/health`.
-6. Camera tren giao dien se hoat dong vi Render cung cap HTTPS cho web service.
+3. Chon repo nay, Render doc `render.yaml` va tao 2 service:
+   - `leafcare-backend` (Python web service)
+   - `leafcare-frontend` (Static site)
+4. Nhap secret `OPENAI_API_KEY` cho backend khi duoc hoi.
+5. Sau khi deploy lan dau, mo frontend URL va thu tai anh.
+6. Kiem tra backend health: `https://leafcare-backend.onrender.com/api/health`
 
-Neu service Render da lien ket voi repo GitHub nay, moi lan push len nhanh `main` se tu dong trigger redeploy.
+## Bien moi truong quan trong
 
-### Bao mat
+- Backend:
+  - `OPENAI_API_KEY` (secret)
+  - `FRONTEND_ORIGIN` (mac dinh trong `render.yaml`: `https://leafcare-frontend.onrender.com`)
+- Frontend:
+  - Cap nhat `frontend/static/js/config.js` neu backend URL thay doi.
 
-- `.env` da duoc ignore, khong push len GitHub.
-- `OPENAI_API_KEY` chi dat trong Render secret env var, khong dat trong frontend.
-- Nen rotate API key da dan trong chat va tao key moi cho production.
+## Ghi chu dung luong
+
+- Frontend duoc deploy rieng, khong kem model ML.
+- Backend chi build tu `backend/` nho `rootDir`, tranh mang theo tai nguyen khong can thiet cua frontend.
+- File tam trong `backend/uploads/*` da duoc bo khoi repo (chi giu `.gitkeep`).

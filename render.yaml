@@ -1,8 +1,9 @@
 services:
   - type: web
-    name: websitechuandoanbenhchola
+    name: leafcare-backend
     runtime: python
     plan: free
+    rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     healthCheckPath: /api/health
@@ -29,5 +30,20 @@ services:
         value: efficientnet
       - key: OPENAI_MODEL
         value: gpt-4o-mini
+      - key: FRONTEND_ORIGIN
+        value: https://leafcare-frontend.onrender.com
       - key: OPENAI_API_KEY
         sync: false
+
+  - type: web
+    name: leafcare-frontend
+    runtime: static
+    plan: free
+    rootDir: frontend
+    buildCommand: echo "No build step"
+    staticPublishPath: .
+    pullRequestPreviewsEnabled: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
