@@ -8,3 +8,11 @@ uploads/originals/*
 uploads/processed/*
 !uploads/originals/.gitkeep
 !uploads/processed/.gitkeep
+
+# Browser automation and Screenshots
+.chrome-automation/
+.codex-chrome-render/
+*.png
+*.db
+server.out.log
+server.err.log
