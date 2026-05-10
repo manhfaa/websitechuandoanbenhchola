@@ -23,6 +23,8 @@ class LlmAdviceService:
         client = OpenAI(
             api_key=self.settings.openai_api_key,
             base_url=self.settings.openai_base_url,
+            timeout=20.0,
+            max_retries=0,
             default_headers={
                 "HTTP-Referer": "https://leafcare-frontend.onrender.com",
                 "X-Title": self.settings.app_name,
@@ -33,6 +35,7 @@ class LlmAdviceService:
             response = client.chat.completions.create(
                 model=self.settings.openai_model,
                 temperature=0.3,
+                max_tokens=600,
                 messages=[
                     {
                         "role": "system",
