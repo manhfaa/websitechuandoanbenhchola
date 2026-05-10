@@ -1,7 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import re
+
+import requests
 
 from services.config import Settings
 
@@ -14,41 +16,37 @@ class LlmAdviceService:
         if not self.settings.openai_api_key:
             return self._fallback_report(classification, "Chua cau hinh API key cho dich vu AI.")
 
-        try:
-            from openai import OpenAI
-        except ModuleNotFoundError:
-            return self._fallback_report(classification, "Thieu thu vien openai trong moi truong.")
-
         prompt = self._build_prompt(detection, classification, symptoms)
-        client = OpenAI(
-            api_key=self.settings.openai_api_key,
-            base_url=self.settings.openai_base_url,
-            timeout=20.0,
-            max_retries=0,
-            default_headers={
-                "HTTP-Referer": "https://leafcare-frontend.onrender.com",
-                "X-Title": self.settings.app_name,
-            },
-        )
 
         try:
-            response = client.chat.completions.create(
-                model=self.settings.openai_model,
-                temperature=0.3,
-                max_tokens=600,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "Ban la chuyen gia ho tro nhan dien benh la cay. "
-                            "Ban chi duoc suy luan tu du lieu YOLO va CNN do he thong cung cap. "
-                            "Khong khang dinh chac chan 100%, luon nhac nguoi dung quan sat them."
-                        ),
-                    },
-                    {"role": "user", "content": prompt},
-                ],
+            response = requests.post(
+                f"{self.settings.openai_base_url.rstrip('/')}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.settings.openai_api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://leafcare-frontend.onrender.com",
+                    "X-Title": self.settings.app_name,
+                },
+                json={
+                    "model": self.settings.openai_model,
+                    "temperature": 0.3,
+                    "max_tokens": 600,
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": (
+                                "Ban la chuyen gia ho tro nhan dien benh la cay. "
+                                "Ban chi duoc suy luan tu du lieu YOLO va CNN do he thong cung cap. "
+                                "Khong khang dinh chac chan 100%, luon nhac nguoi dung quan sat them."
+                            ),
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                },
+                timeout=(5, 18),
             )
-            content = self._extract_content(response)
+            response.raise_for_status()
+            content = self._extract_content(response.json())
             parsed = self._parse_json(content)
             return {
                 "source": self._provider_name(),
@@ -99,8 +97,8 @@ Du lieu dau vao:
 {top_predictions}
 """.strip()
 
-    def _extract_content(self, response) -> str:
-        message = response.choices[0].message.content
+    def _extract_content(self, response: dict) -> str:
+        message = response["choices"][0]["message"]["content"]
         if isinstance(message, str):
             return message
         if isinstance(message, list):
