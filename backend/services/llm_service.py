@@ -2,6 +2,7 @@
 
 import json
 import re
+import time
 
 import requests
 
@@ -19,37 +20,8 @@ class LlmAdviceService:
         prompt = self._build_prompt(detection, classification, symptoms)
 
         try:
-            response = requests.post(
-                f"{self.settings.openai_base_url.rstrip('/')}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.settings.openai_api_key}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "https://leafcare-frontend.onrender.com",
-                    "X-Title": self.settings.app_name,
-                },
-                json={
-                    "model": self.settings.openai_model,
-                    "temperature": 0.3,
-                    "max_tokens": 1400,
-                    "response_format": {"type": "json_object"},
-                    "reasoning": {"effort": "minimal", "exclude": True},
-                    "include_reasoning": False,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": (
-                                "Ban la chuyen gia ho tro nhan dien benh la cay. "
-                                "Ban chi duoc suy luan tu du lieu YOLO va CNN do he thong cung cap. "
-                                "Khong khang dinh chac chan 100%, luon nhac nguoi dung quan sat them."
-                            ),
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                },
-                timeout=(5, 24),
-            )
-            response.raise_for_status()
-            content = self._extract_content(response.json())
+            data = self._post_chat_completion(prompt)
+            content = self._extract_content(data)
             parsed = self._parse_json(content, classification)
             return {
                 "source": self._provider_name(),
@@ -65,6 +37,53 @@ class LlmAdviceService:
                 classification,
                 f"Dich vu AI tam thoi khong phan hoi, he thong dung goi y mac dinh. Chi tiet: {exc}",
             )
+
+    def _post_chat_completion(self, prompt: str) -> dict:
+        payload = {
+            "model": self.settings.openai_model,
+            "temperature": 0.3,
+            "max_tokens": 1400,
+            "response_format": {"type": "json_object"},
+            "reasoning": {"effort": "minimal", "exclude": True},
+            "include_reasoning": False,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "Ban la chuyen gia ho tro nhan dien benh la cay. "
+                        "Ban chi duoc suy luan tu du lieu YOLO va CNN do he thong cung cap. "
+                        "Khong khang dinh chac chan 100%, luon nhac nguoi dung quan sat them."
+                    ),
+                },
+                {"role": "user", "content": prompt},
+            ],
+        }
+        headers = {
+            "Authorization": f"Bearer {self.settings.openai_api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://leafcare-frontend.onrender.com",
+            "X-Title": self.settings.app_name,
+        }
+        deadline = time.monotonic() + 24
+        chunks: list[bytes] = []
+
+        with requests.post(
+            f"{self.settings.openai_base_url.rstrip('/')}/chat/completions",
+            headers=headers,
+            json=payload,
+            stream=True,
+            timeout=(5, 5),
+        ) as response:
+            response.raise_for_status()
+            for chunk in response.iter_content(chunk_size=4096):
+                if chunk:
+                    chunks.append(chunk)
+                if time.monotonic() > deadline:
+                    raise TimeoutError("OpenRouter qua 24 giay chua tra xong noi dung.")
+                if sum(len(item) for item in chunks) > 128_000:
+                    raise ValueError("OpenRouter response qua lon.")
+
+        return json.loads(b"".join(chunks).decode("utf-8"))
 
     def _provider_name(self) -> str:
         if "openrouter.ai" in self.settings.openai_base_url.lower():
