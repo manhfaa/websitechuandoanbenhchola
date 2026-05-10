@@ -12,7 +12,7 @@ class LlmAdviceService:
 
     def generate(self, detection: dict, classification: dict, symptoms: str = "") -> dict:
         if not self.settings.openai_api_key:
-            return self._fallback_report(classification, "Chua cau hinh OPENAI_API_KEY.")
+            return self._fallback_report(classification, "Chua cau hinh API key cho dich vu AI.")
 
         try:
             from openai import OpenAI
@@ -20,7 +20,14 @@ class LlmAdviceService:
             return self._fallback_report(classification, "Thieu thu vien openai trong moi truong.")
 
         prompt = self._build_prompt(detection, classification, symptoms)
-        client = OpenAI(api_key=self.settings.openai_api_key)
+        client = OpenAI(
+            api_key=self.settings.openai_api_key,
+            base_url=self.settings.openai_base_url,
+            default_headers={
+                "HTTP-Referer": "https://leafcare-frontend.onrender.com",
+                "X-Title": self.settings.app_name,
+            },
+        )
 
         try:
             response = client.chat.completions.create(
@@ -41,9 +48,9 @@ class LlmAdviceService:
             content = self._extract_content(response)
             parsed = self._parse_json(content)
             return {
-                "source": "chatgpt",
+                "source": self._provider_name(),
                 "model": self.settings.openai_model,
-                "headline": parsed.get("headline", "Da tao nhan xet tu ChatGPT."),
+                "headline": parsed.get("headline", "Da tao nhan xet tu AI."),
                 "summary": parsed.get("summary", "").strip(),
                 "care_steps": parsed.get("care_steps", []),
                 "next_steps": parsed.get("next_steps", []),
@@ -52,8 +59,13 @@ class LlmAdviceService:
         except Exception as exc:
             return self._fallback_report(
                 classification,
-                f"ChatGPT tam thoi khong phan hoi, he thong dung goi y mac dinh. Chi tiet: {exc}",
+                f"Dich vu AI tam thoi khong phan hoi, he thong dung goi y mac dinh. Chi tiet: {exc}",
             )
+
+    def _provider_name(self) -> str:
+        if "openrouter.ai" in self.settings.openai_base_url.lower():
+            return "openrouter"
+        return "chatgpt"
 
     def _build_prompt(self, detection: dict, classification: dict, symptoms: str) -> str:
         top_predictions = "\n".join(

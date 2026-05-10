@@ -32,8 +32,10 @@ services:
         value: "0"
       - key: USE_CNN
         value: "0"
+      - key: OPENAI_BASE_URL
+        value: https://openrouter.ai/api/v1
       - key: OPENAI_MODEL
-        value: gpt-4o-mini
+        value: inclusionai/ring-2.6-1t:free
       - key: FRONTEND_ORIGIN
         value: https://leafcare-frontend.onrender.com
       - key: OPENAI_API_KEY

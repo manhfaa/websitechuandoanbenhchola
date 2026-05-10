@@ -19,6 +19,7 @@ class Settings:
     cnn_labels_path: Path
     openai_api_key: str | None
     openai_model: str
+    openai_base_url: str
     yolo_conf_threshold: float
     crop_padding_ratio: float
     max_upload_size_mb: int
@@ -50,7 +51,8 @@ def get_settings() -> Settings:
         cnn_model_path=BASE_DIR / os.getenv("CNN_MODEL_PATH", "model_0.h5"),
         cnn_labels_path=BASE_DIR / os.getenv("CNN_LABELS_PATH", "config/cnn_labels.json"),
         openai_api_key=os.getenv("OPENAI_API_KEY"),
-        openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        openai_model=os.getenv("OPENAI_MODEL", "inclusionai/ring-2.6-1t:free"),
+        openai_base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
         yolo_conf_threshold=float(os.getenv("YOLO_CONF_THRESHOLD", "0.25")),
         crop_padding_ratio=float(os.getenv("CROP_PADDING_RATIO", "0.08")),
         max_upload_size_mb=int(os.getenv("MAX_UPLOAD_SIZE_MB", "10")),
