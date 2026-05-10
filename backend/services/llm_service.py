@@ -30,7 +30,8 @@ class LlmAdviceService:
                 json={
                     "model": self.settings.openai_model,
                     "temperature": 0.3,
-                    "max_tokens": 900,
+                    "max_tokens": 1400,
+                    "response_format": {"type": "json_object"},
                     "reasoning": {"effort": "minimal", "exclude": True},
                     "include_reasoning": False,
                     "messages": [
@@ -49,7 +50,7 @@ class LlmAdviceService:
             )
             response.raise_for_status()
             content = self._extract_content(response.json())
-            parsed = self._parse_json(content)
+            parsed = self._parse_json(content, classification)
             return {
                 "source": self._provider_name(),
                 "model": self.settings.openai_model,
@@ -113,9 +114,25 @@ Du lieu dau vao:
             return "\n".join(part for part in parts if part)
         return str(message)
 
-    def _parse_json(self, content: str) -> dict:
+    def _parse_json(self, content: str, classification: dict) -> dict:
         cleaned = re.sub(r"^```json|```$", "", content.strip(), flags=re.MULTILINE).strip()
-        data = json.loads(cleaned)
+        try:
+            data = json.loads(cleaned)
+        except json.JSONDecodeError:
+            return {
+                "headline": f"Nhan xet AI cho: {classification['display_label']}",
+                "summary": cleaned[:900] if cleaned else "AI da phan hoi nhung noi dung khong dung dinh dang JSON.",
+                "care_steps": [
+                    "Chup lai anh la ro hon duoi anh sang tu nhien.",
+                    "Theo doi them mau sac, dom la va toc do lan rong.",
+                    "Cach ly cay co dau hieu bat thuong neu nghi benh lay lan.",
+                ],
+                "next_steps": [
+                    "Thu lai voi anh la that, ro net hon de AI co them du lieu.",
+                    "Kiem tra dieu kien tuoi nuoc, do am va thoang khi.",
+                ],
+                "warning": "Noi dung AI khong dung JSON hoan chinh, he thong da rut gon thanh tom tat.",
+            }
         return {
             "headline": str(data.get("headline", "")).strip(),
             "summary": str(data.get("summary", "")).strip(),
