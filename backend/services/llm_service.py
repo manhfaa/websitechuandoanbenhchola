@@ -30,7 +30,9 @@ class LlmAdviceService:
                 json={
                     "model": self.settings.openai_model,
                     "temperature": 0.3,
-                    "max_tokens": 600,
+                    "max_tokens": 900,
+                    "reasoning": {"effort": "minimal", "exclude": True},
+                    "include_reasoning": False,
                     "messages": [
                         {
                             "role": "system",
@@ -43,7 +45,7 @@ class LlmAdviceService:
                         {"role": "user", "content": prompt},
                     ],
                 },
-                timeout=(5, 18),
+                timeout=(5, 24),
             )
             response.raise_for_status()
             content = self._extract_content(response.json())
