@@ -15,7 +15,7 @@ class LlmAdviceService:
 
     def generate(self, detection: dict, classification: dict, symptoms: str = "") -> dict:
         if not self.settings.openai_api_key:
-            return self._fallback_report(classification, "Chua cau hinh API key cho dich vu AI.")
+            return self._fallback_report(classification, "Chưa cấu hình API key cho dịch vụ AI.")
 
         prompt = self._build_prompt(detection, classification, symptoms)
 
@@ -35,8 +35,61 @@ class LlmAdviceService:
         except Exception as exc:
             return self._fallback_report(
                 classification,
-                f"Dich vu AI tam thoi khong phan hoi, he thong dung goi y mac dinh. Chi tiet: {exc}",
+                f"Dịch vụ AI tạm thời không phản hồi, hệ thống dùng gợi ý mặc định. Chi tiết: {exc}",
             )
+
+    def chat(self, message: str) -> dict:
+        if not self.settings.openai_api_key:
+            return {
+                "source": "fallback",
+                "model": "local-template",
+                "reply": "Chưa cấu hình API key cho chuyên gia nông nghiệp.",
+            }
+
+        payload = {
+            "model": self.settings.openai_model,
+            "temperature": 0.35,
+            "max_tokens": 900,
+            "response_format": {"type": "json_object"},
+            "reasoning": {"effort": "minimal", "exclude": True},
+            "include_reasoning": False,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "Bạn là chuyên gia nông nghiệp hỗ trợ người trồng cây tại Việt Nam. "
+                        "Trả lời ngắn gọn, thực tế, dễ làm. Không chẩn đoán chắc chắn 100%. "
+                        "Luôn khuyên người dùng quan sát thêm hoặc hỏi cán bộ nông nghiệp nếu bệnh nặng. "
+                        "Chỉ trả JSON hợp lệ với khóa reply."
+                    ),
+                },
+                {"role": "user", "content": message},
+            ],
+        }
+
+        try:
+            data = self._request_completion(payload)
+            content = self._extract_content(data)
+            try:
+                parsed = json.loads(content.strip())
+                reply = str(parsed.get("reply", "")).strip()
+            except json.JSONDecodeError:
+                reply = content.strip()
+
+            return {
+                "source": self._provider_name(),
+                "model": self.settings.openai_model,
+                "reply": reply or "AI đã phản hồi nhưng nội dung trống. Hãy thử hỏi lại ngắn hơn.",
+            }
+        except Exception as exc:
+            return {
+                "source": "fallback",
+                "model": "local-template",
+                "reply": (
+                    "Chuyên gia AI đang bận hoặc bị giới hạn lượt gọi. "
+                    f"Bạn vẫn có thể mô tả triệu chứng trong ô phân tích ảnh. Chi tiết: {exc}"
+                ),
+            }
 
     def _post_chat_completion(self, prompt: str) -> dict:
         payload = {
@@ -51,25 +104,27 @@ class LlmAdviceService:
                     "role": "system",
                     "content": (
                         "Ban la chuyen gia ho tro nhan dien benh la cay. "
-                        "Ban chi duoc suy luan tu du lieu YOLO va CNN do he thong cung cap. "
-                        "Khong khang dinh chac chan 100%, luon nhac nguoi dung quan sat them."
+                        "Bạn chỉ được suy luận từ dữ liệu YOLO và CNN do hệ thống cung cấp. "
+                        "Không khẳng định chắc chắn 100%, luôn nhắc người dùng quan sát thêm."
                     ),
                 },
                 {"role": "user", "content": prompt},
             ],
         }
-        headers = {
-            "Authorization": f"Bearer {self.settings.openai_api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://leafcare-frontend.onrender.com",
-            "X-Title": self.settings.app_name,
-        }
+        return self._request_completion(payload)
+
+    def _request_completion(self, payload: dict) -> dict:
         deadline = time.monotonic() + 24
         chunks: list[bytes] = []
 
         with requests.post(
             f"{self.settings.openai_base_url.rstrip('/')}/chat/completions",
-            headers=headers,
+            headers={
+                "Authorization": f"Bearer {self.settings.openai_api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://leafcare-frontend.onrender.com",
+                "X-Title": self.settings.app_name,
+            },
             json=payload,
             stream=True,
             timeout=(5, 5),
@@ -95,25 +150,25 @@ class LlmAdviceService:
             f"- {item['display_label']}: {item['confidence'] * 100:.2f}%"
             for item in classification["top_predictions"]
         )
-        symptoms_text = symptoms if symptoms else "Khong co mo ta trieu chung bo sung."
+        symptoms_text = symptoms if symptoms else "Không có mô tả triệu chứng bổ sung."
 
         return f"""
-Hay tra ve JSON hop le voi dung cac khoa:
+Hãy trả về JSON hợp lệ với đúng các khóa:
 headline, summary, care_steps, next_steps, warning
 
-Yeu cau:
-- Viet bang tieng Viet, ngan gon, de hieu voi nguoi dung pho thong.
-- summary dai 2-3 cau.
-- care_steps la mang 3-4 y hanh dong thuc te.
-- next_steps la mang 2-3 y quan sat tiep theo.
-- warning la 1 cau nhac day chi la goi y tu mo hinh AI.
+Yêu cầu:
+- Viết bằng tiếng Việt, ngắn gọn, dễ hiểu với người dùng phổ thông.
+- summary dài 2-3 câu.
+- care_steps là mảng 3-4 ý hành động thực tế.
+- next_steps là mảng 2-3 ý quan sát tiếp theo.
+- warning là 1 câu nhắc đây chỉ là gợi ý từ mô hình AI.
 
-Du lieu dau vao:
-- YOLO tim thay la: {"co" if detection["found"] else "khong"}
-- Do tin cay YOLO: {detection["confidence"] * 100:.2f}%
-- Ket qua CNN tot nhat: {classification["display_label"]}
-- Do tin cay CNN: {classification["confidence"] * 100:.2f}%
-- Trieu chung nguoi dung mo ta:
+Dữ liệu đầu vào:
+- YOLO tìm thấy lá: {"có" if detection["found"] else "không"}
+- Độ tin cậy YOLO: {detection["confidence"] * 100:.2f}%
+- Kết quả CNN tốt nhất: {classification["display_label"]}
+- Độ tin cậy CNN: {classification["confidence"] * 100:.2f}%
+- Triệu chứng người dùng mô tả:
 {symptoms_text}
 - Top du doan:
 {top_predictions}
@@ -140,17 +195,17 @@ Du lieu dau vao:
         except json.JSONDecodeError:
             return {
                 "headline": f"Nhan xet AI cho: {classification['display_label']}",
-                "summary": cleaned[:900] if cleaned else "AI da phan hoi nhung noi dung khong dung dinh dang JSON.",
+                "summary": cleaned[:900] if cleaned else "AI đã phản hồi nhưng nội dung không đúng định dạng JSON.",
                 "care_steps": [
-                    "Chup lai anh la ro hon duoi anh sang tu nhien.",
-                    "Theo doi them mau sac, dom la va toc do lan rong.",
-                    "Cach ly cay co dau hieu bat thuong neu nghi benh lay lan.",
+                    "Chụp lại ảnh lá rõ hơn dưới ánh sáng tự nhiên.",
+                    "Theo dõi thêm màu sắc, đốm lá và tốc độ lan rộng.",
+                    "Cách ly cây có dấu hiệu bất thường nếu nghi bệnh lây lan.",
                 ],
                 "next_steps": [
-                    "Thu lai voi anh la that, ro net hon de AI co them du lieu.",
-                    "Kiem tra dieu kien tuoi nuoc, do am va thoang khi.",
+                    "Thử lại với ảnh lá thật, rõ nét hơn để AI có thêm dữ liệu.",
+                    "Kiểm tra điều kiện tưới nước, độ ẩm và thoáng khí.",
                 ],
-                "warning": "Noi dung AI khong dung JSON hoan chinh, he thong da rut gon thanh tom tat.",
+                "warning": "Nội dung AI không đúng JSON hoàn chỉnh, hệ thống đã rút gọn thành tóm tắt.",
             }
         return {
             "headline": str(data.get("headline", "")).strip(),
@@ -166,20 +221,20 @@ Du lieu dau vao:
         return {
             "source": "fallback",
             "model": "local-template",
-            "headline": f"Ket qua gan nhat: {label}",
+            "headline": f"Kết quả gần nhất: {label}",
             "summary": (
-                f"CNN dang nghieng ve lop '{label}' voi do tin cay khoang {confidence:.1f}%. "
-                "Ban nen xem day la goi y ban dau de kiem tra la va dieu kien cham soc thuc te."
+                f"CNN đang nghiêng về lớp '{label}' với độ tin cậy khoảng {confidence:.1f}%. "
+                "Bạn nên xem đây là gợi ý ban đầu để kiểm tra lá và điều kiện chăm sóc thực tế."
             ),
             "care_steps": [
-                "Tach rieng cay co dau hieu bat thuong de han che lay lan.",
-                "Kiem tra lai mat tren, mat duoi la va chup them anh sang ro neu can.",
-                "Dieu chinh tuoi nuoc, anh sang va do thong thoang quanh cay.",
-                "Loai bo phan la hu nang neu cay da bi ton thuong ro ret.",
+                "Tách riêng cây có dấu hiệu bất thường để hạn chế lây lan.",
+                "Kiểm tra lại mặt trên, mặt dưới lá và chụp thêm ảnh sáng rõ nếu cần.",
+                "Điều chỉnh tưới nước, ánh sáng và độ thông thoáng quanh cây.",
+                "Loại bỏ phần lá hư nặng nếu cây đã bị tổn thương rõ rệt.",
             ],
             "next_steps": [
-                "Theo doi su thay doi cua dom la trong 3-5 ngay tiep theo.",
-                "So sanh them voi anh chuan hoac hoi can bo nong nghiep khi can.",
+                "Theo dõi sự thay đổi của đốm lá trong 3-5 ngày tiếp theo.",
+                "So sánh thêm với ảnh chuẩn hoặc hỏi cán bộ nông nghiệp khi cần.",
             ],
             "warning": reason,
         }

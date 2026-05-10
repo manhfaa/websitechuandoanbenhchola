@@ -1,4 +1,4 @@
-import os
+﻿import os
 from pathlib import Path
 import importlib.util
 
@@ -49,7 +49,7 @@ def index() -> tuple[dict, int]:
             {
                 "status": "ok",
                 "service": "leafcare-backend",
-                "message": "Use /api/health and /api/analyze from frontend.",
+                "message": "Dùng /api/health, /api/analyze và /api/chat từ frontend.",
             }
         ),
         200,
@@ -78,6 +78,21 @@ def health() -> tuple[dict, int]:
         ),
         200,
     )
+
+
+@app.post("/api/chat")
+def chat() -> tuple[dict, int]:
+    payload = request.get_json(silent=True) or {}
+    message = str(payload.get("message", "")).strip()
+
+    if not message:
+        return jsonify({"success": False, "error": "Vui lòng nhập câu hỏi cho chuyên gia nông nghiệp."}), 400
+
+    if len(message) > 1200:
+        return jsonify({"success": False, "error": "Câu hỏi quá dài. Vui lòng rút gọn dưới 1200 ký tự."}), 400
+
+    reply = pipeline.llm.chat(message)
+    return jsonify({"success": True, "result": reply}), 200
 
 
 @app.post("/api/analyze")
@@ -130,4 +145,3 @@ if __name__ == "__main__":
         port=int(os.getenv("PORT", "5000")),
         debug=os.getenv("FLASK_DEBUG", "0") == "1",
     )
-

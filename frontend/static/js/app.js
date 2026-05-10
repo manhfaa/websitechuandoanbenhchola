@@ -1,13 +1,10 @@
-const state = {
+﻿const state = {
   file: null,
   previewUrl: "",
   mediaStream: null,
 };
 
-const API_BASE_URL = String(window.APP_CONFIG?.API_BASE_URL || window.location.origin).replace(
-  /\/$/,
-  ""
-);
+const API_BASE_URL = String(window.APP_CONFIG?.API_BASE_URL || window.location.origin).replace(/\/$/, "");
 
 const elements = {
   fileInput: document.getElementById("fileInput"),
@@ -47,25 +44,22 @@ const elements = {
   careSteps: document.getElementById("careSteps"),
   nextSteps: document.getElementById("nextSteps"),
   llmWarning: document.getElementById("llmWarning"),
+  chatToggle: document.getElementById("chatToggle"),
+  chatPanel: document.getElementById("chatPanel"),
+  chatClose: document.getElementById("chatClose"),
+  chatForm: document.getElementById("chatForm"),
+  chatInput: document.getElementById("chatInput"),
+  chatMessages: document.getElementById("chatMessages"),
+  chatSend: document.getElementById("chatSend"),
 };
 
-const CAMERA_DEFAULT_TEXT =
-  "Camera se hoat dong tot tren localhost va ban Render da bat HTTPS.";
+const CAMERA_DEFAULT_TEXT = "Camera sẽ hoạt động tốt trên localhost và bản Render đã bật HTTPS.";
 
 function basePipeline() {
   return [
-    {
-      title: "YOLO nhan dien la",
-      detail: "Tach vung la ro nhat truoc khi dua sang CNN.",
-    },
-    {
-      title: "CNN phan loai",
-      detail: "Doc anh crop va tinh xac suat cho tung lop cua model_0.h5.",
-    },
-    {
-      title: "ChatGPT tu van",
-      detail: "Tom tat ngan gon, de hieu va goi y cham soc tiep theo.",
-    },
+    { title: "YOLO nhận diện lá", detail: "Tách vùng lá rõ nhất trước khi đưa sang CNN." },
+    { title: "CNN phân loại", detail: "Đọc ảnh crop và tính xác suất cho từng lớp của model_0.h5." },
+    { title: "AI tư vấn", detail: "Tóm tắt ngắn gọn, dễ hiểu và gợi ý chăm sóc tiếp theo." },
   ];
 }
 
@@ -77,25 +71,16 @@ async function init() {
 }
 
 function bindEvents() {
-  elements.fileInput.addEventListener("change", (event) => {
-    const [file] = event.target.files;
-    applyFile(file);
-  });
-
+  elements.fileInput.addEventListener("change", (event) => applyFile(event.target.files[0]));
   elements.dropzone.addEventListener("dragover", (event) => {
     event.preventDefault();
     elements.dropzone.classList.add("drag-over");
   });
-
-  elements.dropzone.addEventListener("dragleave", () => {
-    elements.dropzone.classList.remove("drag-over");
-  });
-
+  elements.dropzone.addEventListener("dragleave", () => elements.dropzone.classList.remove("drag-over"));
   elements.dropzone.addEventListener("drop", (event) => {
     event.preventDefault();
     elements.dropzone.classList.remove("drag-over");
-    const [file] = event.dataTransfer.files;
-    applyFile(file);
+    applyFile(event.dataTransfer.files[0]);
   });
 
   elements.openCameraButton.addEventListener("click", startCamera);
@@ -103,18 +88,16 @@ function bindEvents() {
   elements.closeCameraButton.addEventListener("click", closeCameraPanel);
   elements.analyzeButton.addEventListener("click", analyzeImage);
   elements.resetButton.addEventListener("click", resetForm);
-
+  elements.chatToggle.addEventListener("click", openChat);
+  elements.chatClose.addEventListener("click", closeChat);
+  elements.chatForm.addEventListener("submit", sendChatMessage);
   window.addEventListener("beforeunload", stopCameraStream);
 }
 
 function syncCameraAvailability() {
-  if (hasCameraSupport()) {
-    return;
-  }
-
+  if (hasCameraSupport()) return;
   elements.openCameraButton.disabled = true;
-  elements.cameraHelper.textContent =
-    "Trinh duyet hien tai khong ho tro chup anh truc tiep. Ban van co the tai anh thu cong.";
+  elements.cameraHelper.textContent = "Trình duyệt hiện tại không hỗ trợ chụp ảnh trực tiếp. Bạn vẫn có thể tải ảnh thủ công.";
 }
 
 function hasCameraSupport() {
@@ -122,12 +105,9 @@ function hasCameraSupport() {
 }
 
 function applyFile(file, options = {}) {
-  if (!file) {
-    return;
-  }
-
+  if (!file) return;
   if (file.type && !file.type.startsWith("image/")) {
-    showBanner("Vui long chon dung file anh JPG, PNG hoac WEBP.", "error");
+    showBanner("Vui lòng chọn đúng file ảnh JPG, PNG hoặc WEBP.", "error");
     return;
   }
 
@@ -135,30 +115,21 @@ function applyFile(file, options = {}) {
   elements.fileName.textContent = options.label || file.name;
   elements.analyzeButton.disabled = false;
 
-  if (state.previewUrl) {
-    URL.revokeObjectURL(state.previewUrl);
-  }
-
+  if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
   state.previewUrl = URL.createObjectURL(file);
   elements.previewImage.src = state.previewUrl;
   elements.previewImage.classList.remove("is-empty");
 
-  if (options.fromCamera) {
-    showBanner("Da chup anh thanh cong. Ban co the bam Phan tich ngay.", "info");
-  }
+  if (options.fromCamera) showBanner("Đã chụp ảnh thành công. Bạn có thể bấm Phân tích ngay.", "info");
 }
 
 function resetForm() {
   state.file = null;
-
-  if (state.previewUrl) {
-    URL.revokeObjectURL(state.previewUrl);
-  }
-
+  if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
   state.previewUrl = "";
   elements.fileInput.value = "";
   elements.symptomsInput.value = "";
-  elements.fileName.textContent = "Chua chon anh";
+  elements.fileName.textContent = "Chưa chọn ảnh";
   elements.previewImage.removeAttribute("src");
   elements.previewImage.classList.add("is-empty");
   elements.analyzeButton.disabled = true;
@@ -174,13 +145,13 @@ function clearResults() {
   elements.resultOriginal.removeAttribute("src");
   elements.resultAnnotated.removeAttribute("src");
   elements.resultCrop.removeAttribute("src");
-  elements.cnnHeadline.textContent = "Chua co du lieu";
+  elements.cnnHeadline.textContent = "Chưa có dữ liệu";
   elements.cnnLabel.textContent = "-";
-  elements.cnnConfidence.textContent = "Do tin cay: -";
+  elements.cnnConfidence.textContent = "Độ tin cậy: -";
   elements.cnnWarning.textContent = "";
   elements.cnnWarning.classList.add("hidden");
   elements.predictionList.innerHTML = "";
-  elements.llmSource.textContent = "Nguon: -";
+  elements.llmSource.textContent = "Nguồn: -";
   elements.llmHeadline.textContent = "-";
   elements.llmSummary.textContent = "-";
   elements.careSteps.innerHTML = "";
@@ -191,92 +162,57 @@ function clearResults() {
 async function loadHealth() {
   try {
     const response = await fetch(buildApiUrl("/api/health"));
-    const data = await readJsonResponse(response, "Khong doc duoc trang thai backend.");
+    const data = await readJsonResponse(response, "Không đọc được trạng thái backend.");
     const dependencies = data.dependencies;
 
-    elements.serverStatus.textContent = "San sang";
+    elements.serverStatus.textContent = "Sẵn sàng";
     elements.serverStatus.className = "status-pill success";
-    elements.healthYolo.textContent =
-      dependencies.yolo_model_found && dependencies.ultralytics_ready
-        ? "San sang"
-        : dependencies.yolo_model_found
-          ? "Thieu ultralytics"
-          : "Thieu model";
-    elements.healthCnn.textContent =
-      dependencies.cnn_model_found && dependencies.tensorflow_ready
-        ? "San sang"
-        : dependencies.cnn_model_found
-          ? "Thieu TensorFlow"
-          : "Thieu model";
-    elements.healthLabels.textContent = dependencies.cnn_labels_found
-      ? "Co file nhan"
-      : "Dang dung nhan mau";
-    elements.healthOpenAi.textContent = dependencies.openai_key_configured
-      ? "Da cau hinh"
-      : "Chua co API key";
+    elements.healthYolo.textContent = dependencies.yolo_model_found && dependencies.ultralytics_ready ? "Sẵn sàng" : dependencies.yolo_model_found ? "Thiếu ultralytics" : "Thiếu model";
+    elements.healthCnn.textContent = dependencies.cnn_model_found && dependencies.tensorflow_ready ? "Sẵn sàng" : dependencies.cnn_model_found ? "Thiếu TensorFlow" : "Thiếu model";
+    elements.healthLabels.textContent = dependencies.cnn_labels_found ? "Có file nhãn" : "Đang dùng nhãn mẫu";
+    elements.healthOpenAi.textContent = dependencies.openai_key_configured ? "Đã cấu hình" : "Chưa có API key";
 
     if (!dependencies.ultralytics_ready || !dependencies.tensorflow_ready) {
-      showBanner(
-        "Moi truong hien tai dang thieu mot so thu vien ML. Website van mo duoc, nhung suy luan model co the khong day du.",
-        "info"
-      );
+      showBanner("Môi trường hiện tại đang thiếu một số thư viện ML. Website vẫn mở được, nhưng suy luận model có thể không đầy đủ.", "info");
     }
   } catch (error) {
-    elements.serverStatus.textContent = "Khong ket noi";
+    elements.serverStatus.textContent = "Không kết nối";
     elements.serverStatus.className = "status-pill warning";
-    elements.healthYolo.textContent = "Khong ro";
-    elements.healthCnn.textContent = "Khong ro";
-    elements.healthLabels.textContent = "Khong ro";
-    elements.healthOpenAi.textContent = "Khong ro";
+    elements.healthYolo.textContent = "Không rõ";
+    elements.healthCnn.textContent = "Không rõ";
+    elements.healthLabels.textContent = "Không rõ";
+    elements.healthOpenAi.textContent = "Không rõ";
   }
 }
 
 async function startCamera() {
   if (!hasCameraSupport()) {
-    showBanner("Trinh duyet khong ho tro camera truc tiep.", "error");
+    showBanner("Trình duyệt không hỗ trợ camera trực tiếp.", "error");
     return;
   }
-
   hideBanner();
   elements.cameraShell.classList.remove("hidden");
-  elements.cameraHelper.textContent = "Dang yeu cau quyen camera...";
-
+  elements.cameraHelper.textContent = "Đang yêu cầu quyền camera...";
   stopCameraStream();
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: "environment" },
-      },
-      audio: false,
-    });
-
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
     state.mediaStream = stream;
     elements.cameraVideo.srcObject = stream;
     await elements.cameraVideo.play();
-
     elements.openCameraButton.classList.add("hidden");
     elements.captureButton.classList.remove("hidden");
     elements.closeCameraButton.classList.remove("hidden");
-    elements.cameraHelper.textContent = "Camera da san sang. Can la vao giua khung roi bam Chup anh.";
+    elements.cameraHelper.textContent = "Camera đã sẵn sàng. Căn lá vào giữa khung rồi bấm Chụp ảnh.";
   } catch (error) {
     closeCameraPanel();
-    showBanner(
-      "Khong mo duoc camera. Hay cap quyen camera cho trinh duyet va thu lai.",
-      "error"
-    );
+    showBanner("Không mở được camera. Hãy cấp quyền camera cho trình duyệt và thử lại.", "error");
   }
 }
 
 function stopCameraStream() {
-  if (!state.mediaStream) {
-    return;
-  }
-
-  for (const track of state.mediaStream.getTracks()) {
-    track.stop();
-  }
-
+  if (!state.mediaStream) return;
+  for (const track of state.mediaStream.getTracks()) track.stop();
   state.mediaStream = null;
   elements.cameraVideo.srcObject = null;
 }
@@ -292,42 +228,28 @@ function closeCameraPanel() {
 
 async function captureImage() {
   if (!state.mediaStream || !elements.cameraVideo.videoWidth || !elements.cameraVideo.videoHeight) {
-    showBanner("Camera chua san sang de chup. Hay doi 1 chut roi thu lai.", "error");
+    showBanner("Camera chưa sẵn sàng để chụp. Hãy đợi một chút rồi thử lại.", "error");
     return;
   }
-
   const canvas = elements.captureCanvas;
   const context = canvas.getContext("2d");
-
   canvas.width = elements.cameraVideo.videoWidth;
   canvas.height = elements.cameraVideo.videoHeight;
   context.drawImage(elements.cameraVideo, 0, 0, canvas.width, canvas.height);
-
-  const blob = await new Promise((resolve) => {
-    canvas.toBlob(resolve, "image/jpeg", 0.92);
-  });
-
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
   if (!blob) {
-    showBanner("Khong the tao anh tu camera. Hay thu chup lai.", "error");
+    showBanner("Không thể tạo ảnh từ camera. Hãy thử chụp lại.", "error");
     return;
   }
-
-  const file = new File([blob], `leaf-camera-${Date.now()}.jpg`, {
-    type: "image/jpeg",
-  });
-
-  applyFile(file, {
-    label: "Anh chup tu camera",
+  applyFile(new File([blob], `leaf-camera-${Date.now()}.jpg`, { type: "image/jpeg" }), {
+    label: "Ảnh chụp từ camera",
     fromCamera: true,
   });
   closeCameraPanel();
 }
 
 async function analyzeImage() {
-  if (!state.file) {
-    return;
-  }
-
+  if (!state.file) return;
   setLoadingState(true);
   hideBanner();
   renderPipeline(basePipeline());
@@ -337,16 +259,9 @@ async function analyzeImage() {
   formData.append("symptoms", (elements.symptomsInput?.value || "").trim());
 
   try {
-    const response = await fetch(buildApiUrl("/api/analyze"), {
-      method: "POST",
-      body: formData,
-    });
-    const payload = await readJsonResponse(response, "Backend khong tra ve JSON hop le.");
-
-    if (!response.ok || !payload.success) {
-      throw new Error(payload.error || "Khong the phan tich anh.");
-    }
-
+    const response = await fetch(buildApiUrl("/api/analyze"), { method: "POST", body: formData });
+    const payload = await readJsonResponse(response, "Backend không trả về JSON hợp lệ.");
+    if (!response.ok || !payload.success) throw new Error(payload.error || "Không thể phân tích ảnh.");
     renderResult(payload.result);
   } catch (error) {
     showBanner(error.message, "error");
@@ -357,8 +272,8 @@ async function analyzeImage() {
 
 function setLoadingState(isLoading) {
   elements.analyzeButton.disabled = isLoading || !state.file;
-  elements.analyzeButton.textContent = isLoading ? "Dang phan tich..." : "Phan tich ngay";
-  elements.serverStatus.textContent = isLoading ? "Dang xu ly" : "San sang";
+  elements.analyzeButton.textContent = isLoading ? "Đang phân tích..." : "Phân tích ngay";
+  elements.serverStatus.textContent = isLoading ? "Đang xử lý" : "Sẵn sàng";
   elements.serverStatus.className = isLoading ? "status-pill warning" : "status-pill success";
 }
 
@@ -367,17 +282,8 @@ function renderPipeline(items) {
     .map((item, index) => {
       const title = item.step || item.title;
       const detail = item.detail || "";
-      const durationText = item.duration_ms ? `<br />Thoi gian: ${item.duration_ms} ms` : "";
-
-      return `
-        <article class="pipeline-item">
-          <span class="step-index">${index + 1}</span>
-          <div>
-            <h3>${escapeHtml(title)}</h3>
-            <p>${escapeHtml(detail)}${durationText}</p>
-          </div>
-        </article>
-      `;
+      const durationText = item.duration_ms ? `<br />Thời gian: ${item.duration_ms} ms` : "";
+      return `<article class="pipeline-item"><span class="step-index">${index + 1}</span><div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(detail)}${durationText}</p></div></article>`;
     })
     .join("");
 }
@@ -385,12 +291,10 @@ function renderPipeline(items) {
 function renderResult(result) {
   elements.resultsCard.classList.remove("hidden");
   elements.processingTime.textContent = `${result.meta.total_duration_ms} ms`;
-
   renderPipeline(result.pipeline);
   renderImages(result.images);
   renderClassification(result.classification);
   renderAdvice(result.llm);
-
   elements.resultsCard.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -403,56 +307,75 @@ function renderImages(images) {
 function renderClassification(classification) {
   elements.cnnHeadline.textContent = `${classification.input_size.width} x ${classification.input_size.height}`;
   elements.cnnLabel.textContent = classification.display_label;
-  elements.cnnConfidence.textContent = `Do tin cay: ${(classification.confidence * 100).toFixed(2)}%`;
-
-  if (classification.warning) {
-    elements.cnnWarning.textContent = classification.warning;
-    elements.cnnWarning.classList.remove("hidden");
-  } else {
-    elements.cnnWarning.textContent = "";
-    elements.cnnWarning.classList.add("hidden");
-  }
-
+  elements.cnnConfidence.textContent = `Độ tin cậy: ${(classification.confidence * 100).toFixed(2)}%`;
+  elements.cnnWarning.textContent = classification.warning || "";
+  elements.cnnWarning.classList.toggle("hidden", !classification.warning);
   elements.predictionList.innerHTML = classification.top_predictions
-    .map(
-      (item) => `
-        <div class="prediction-item">
-          <div class="prediction-row">
-            <strong>${escapeHtml(item.display_label)}</strong>
-            <span>${(item.confidence * 100).toFixed(2)}%</span>
-          </div>
-          <div class="prediction-bar">
-            <span style="width: ${(item.confidence * 100).toFixed(2)}%"></span>
-          </div>
-        </div>
-      `
-    )
+    .map((item) => `<div class="prediction-item"><div class="prediction-row"><strong>${escapeHtml(item.display_label)}</strong><span>${(item.confidence * 100).toFixed(2)}%</span></div><div class="prediction-bar"><span style="width: ${(item.confidence * 100).toFixed(2)}%"></span></div></div>`)
     .join("");
 }
 
 function renderAdvice(llm) {
-  elements.llmSource.textContent = `Nguon: ${llm.source} (${llm.model})`;
+  elements.llmSource.textContent = `Nguồn: ${llm.source} (${llm.model})`;
   elements.llmHeadline.textContent = llm.headline || "-";
   elements.llmSummary.textContent = llm.summary || "-";
-  elements.llmWarning.textContent = llm.warning || "Khong co ghi chu them.";
-
+  elements.llmWarning.textContent = llm.warning || "Không có ghi chú thêm.";
   renderList(elements.careSteps, llm.care_steps);
   renderList(elements.nextSteps, llm.next_steps);
 }
 
 function renderList(target, items) {
-  target.innerHTML = (items || [])
-    .map((item) => `<li>${escapeHtml(item)}</li>`)
-    .join("");
+  target.innerHTML = (items || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+}
+
+function openChat() {
+  elements.chatPanel.classList.remove("hidden");
+  elements.chatToggle.classList.add("hidden");
+  elements.chatInput.focus();
+}
+
+function closeChat() {
+  elements.chatPanel.classList.add("hidden");
+  elements.chatToggle.classList.remove("hidden");
+}
+
+async function sendChatMessage(event) {
+  event.preventDefault();
+  const message = elements.chatInput.value.trim();
+  if (!message) return;
+
+  addChatMessage(message, "user");
+  elements.chatInput.value = "";
+  elements.chatSend.disabled = true;
+  const typing = addChatMessage("Chuyên gia đang trả lời...", "bot muted");
+
+  try {
+    const response = await fetch(buildApiUrl("/api/chat"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+    const payload = await readJsonResponse(response, "Backend không trả về phản hồi chat hợp lệ.");
+    if (!response.ok || !payload.success) throw new Error(payload.error || "Không gửi được câu hỏi.");
+    typing.textContent = payload.result.reply || "Chuyên gia chưa có phản hồi.";
+  } catch (error) {
+    typing.textContent = error.message;
+  } finally {
+    elements.chatSend.disabled = false;
+  }
+}
+
+function addChatMessage(text, type) {
+  const message = document.createElement("div");
+  message.className = `chat-message ${type}`;
+  message.textContent = text;
+  elements.chatMessages.appendChild(message);
+  elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+  return message;
 }
 
 function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
 function showBanner(message, type) {
@@ -472,11 +395,9 @@ function buildApiUrl(path) {
 async function readJsonResponse(response, fallbackMessage) {
   const contentType = (response.headers.get("content-type") || "").toLowerCase();
   const bodyText = await response.text();
-
   if (!contentType.includes("application/json")) {
-    throw new Error(`${fallbackMessage} API dang tra ve ${contentType || "du lieu khong xac dinh"}.`);
+    throw new Error(`${fallbackMessage} API đang trả về ${contentType || "dữ liệu không xác định"}.`);
   }
-
   try {
     return JSON.parse(bodyText);
   } catch {

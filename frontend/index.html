@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
@@ -6,21 +6,17 @@
     <title>LeafCare AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./static/css/styles.css" />
   </head>
   <body>
     <div class="page-shell">
       <header class="hero">
         <div class="hero-copy">
-          <span class="eyebrow">YOLO -> CNN -> ChatGPT</span>
+          <span class="eyebrow">YOLO -> CNN -> OpenRouter AI</span>
           <h1>LeafAI</h1>
           <p>
-            Tải ảnh lá cây, hệ thống sẽ tách vùng lá bằng YOLO, phân loại bằng CNN và
-            sinh tư vấn ngắn gọn bằng ChatGPT trên cùng một giao diện.
+            Tải ảnh lá cây, hệ thống sẽ tách vùng lá bằng YOLO, phân loại bằng CNN và sinh tư vấn ngắn gọn bằng AI trên cùng một giao diện.
           </p>
           <div class="hero-badges">
             <span>Thiết kế xanh lá</span>
@@ -33,8 +29,8 @@
             <strong>Luồng xử lý</strong>
             <ol>
               <li>Phát hiện lá bằng module YOLO</li>
-              <li>Phân loại với `model_0.h5`</li>
-              <li>Tạo tư vấn với API ChatGPT</li>
+              <li>Phân loại với <code>model_0.h5</code></li>
+              <li>Tạo tư vấn với OpenRouter AI</li>
             </ol>
           </div>
         </div>
@@ -54,32 +50,24 @@
 
           <div class="capture-intro">
             <div>
-              <strong>Chon cach dua anh vao he thong</strong>
-              <p>Ban co the tai anh co san hoac mo camera de chup truc tiep ngay tren giao dien nay.</p>
+              <strong>Chọn cách đưa ảnh vào hệ thống</strong>
+              <p>Bạn có thể tải ảnh có sẵn hoặc mở camera để chụp trực tiếp ngay trên giao diện này.</p>
             </div>
             <div class="capture-actions">
-              <button class="ghost-button" id="openCameraButton" type="button">Mo camera</button>
-              <button class="ghost-button hidden" id="captureButton" type="button">Chup anh</button>
-              <button class="ghost-button hidden" id="closeCameraButton" type="button">Tat camera</button>
+              <button class="ghost-button" id="openCameraButton" type="button">Mở camera</button>
+              <button class="ghost-button hidden" id="captureButton" type="button">Chụp ảnh</button>
+              <button class="ghost-button hidden" id="closeCameraButton" type="button">Tắt camera</button>
             </div>
           </div>
 
           <section class="camera-shell hidden" id="cameraShell" aria-live="polite">
             <div class="camera-stage">
-              <video
-                id="cameraStream"
-                class="camera-feed"
-                autoplay
-                playsinline
-                muted
-              ></video>
+              <video id="cameraStream" class="camera-feed" autoplay playsinline muted></video>
               <div class="camera-overlay">
-                <span>Can giua la chinh trong khung de he thong doc ro hon.</span>
+                <span>Căn giữa lá chính trong khung để hệ thống đọc rõ hơn.</span>
               </div>
             </div>
-            <p class="camera-helper" id="cameraHelper">
-              Camera se hoat dong tot tren localhost va ban Render da bat HTTPS.
-            </p>
+            <p class="camera-helper" id="cameraHelper">Camera sẽ hoạt động tốt trên localhost và bản Render đã bật HTTPS.</p>
             <canvas id="captureCanvas" hidden></canvas>
           </section>
 
@@ -87,9 +75,7 @@
             <input id="fileInput" type="file" accept="image/*" hidden />
             <div class="dropzone-icon">
               <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M12 3c4.8 0 8.7 3.9 8.7 8.7S16.8 20.4 12 20.4 3.3 16.5 3.3 11.7 7.2 3 12 3Zm0 2.2a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Zm-.2 2.6c.6 0 1.1.5 1.1 1.1v2.2H15c.6 0 1.1.5 1.1 1.1s-.5 1.1-1.1 1.1h-2.1v2.1c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1v-2.1H8.6c-.6 0-1.1-.5-1.1-1.1s.5-1.1 1.1-1.1h2.1V8.9c0-.6.5-1.1 1.1-1.1Z"
-                />
+                <path d="M12 3c4.8 0 8.7 3.9 8.7 8.7S16.8 20.4 12 20.4 3.3 16.5 3.3 11.7 7.2 3 12 3Zm0 2.2a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Zm-.2 2.6c.6 0 1.1.5 1.1 1.1v2.2H15c.6 0 1.1.5 1.1 1.1s-.5 1.1-1.1 1.1h-2.1v2.1c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1v-2.1H8.6c-.6 0-1.1-.5-1.1-1.1s.5-1.1 1.1-1.1h2.1V8.9c0-.6.5-1.1 1.1-1.1Z" />
               </svg>
             </div>
             <strong>Kéo thả ảnh vào đây hoặc bấm để chọn ảnh</strong>
@@ -105,22 +91,13 @@
           </div>
 
           <section class="symptom-box">
-            <label for="symptomsInput">Trieu chung ban quan sat duoc</label>
-            <textarea
-              id="symptomsInput"
-              rows="4"
-              maxlength="600"
-              placeholder="Vi du: la vang o ria, co dom nau tron, mat duoi la co vet uot, cay cham lon..."
-            ></textarea>
-            <p class="helper-text">
-              Thong tin nay se duoc ket hop cung ket qua CNN de ChatGPT goi y giai phap sat hon.
-            </p>
+            <label for="symptomsInput">Triệu chứng bạn quan sát được</label>
+            <textarea id="symptomsInput" rows="4" maxlength="600" placeholder="Ví dụ: lá vàng ở rìa, có đốm nâu tròn, mặt dưới lá có vết ướt, cây chậm lớn..."></textarea>
+            <p class="helper-text">Thông tin này sẽ được kết hợp cùng kết quả CNN để AI gợi ý giải pháp sát hơn.</p>
           </section>
 
           <div class="action-row">
-            <button id="analyzeButton" class="primary-button" type="button" disabled>
-              Phân tích ngay
-            </button>
+            <button id="analyzeButton" class="primary-button" type="button" disabled>Phân tích ngay</button>
             <p class="helper-text">Khuyến nghị ảnh chỉ có 1 lá hoặc cụm lá chính.</p>
           </div>
         </section>
@@ -135,22 +112,10 @@
           </div>
 
           <div class="health-grid">
-            <div class="health-item">
-              <span>YOLO</span>
-              <strong id="healthYolo">...</strong>
-            </div>
-            <div class="health-item">
-              <span>CNN</span>
-              <strong id="healthCnn">...</strong>
-            </div>
-            <div class="health-item">
-              <span>Nhãn CNN</span>
-              <strong id="healthLabels">...</strong>
-            </div>
-            <div class="health-item">
-              <span>ChatGPT API</span>
-              <strong id="healthOpenAi">...</strong>
-            </div>
+            <div class="health-item"><span>YOLO</span><strong id="healthYolo">...</strong></div>
+            <div class="health-item"><span>CNN</span><strong id="healthCnn">...</strong></div>
+            <div class="health-item"><span>Nhãn CNN</span><strong id="healthLabels">...</strong></div>
+            <div class="health-item"><span>OpenRouter API</span><strong id="healthOpenAi">...</strong></div>
           </div>
 
           <div id="pipelineList" class="pipeline-list"></div>
@@ -172,18 +137,9 @@
                 <span>YOLO crop và đánh dấu vùng lá</span>
               </div>
               <div class="triple-preview">
-                <figure>
-                  <img id="resultOriginal" alt="Ảnh gốc" />
-                  <figcaption>Ảnh gốc</figcaption>
-                </figure>
-                <figure>
-                  <img id="resultAnnotated" alt="Ảnh YOLO" />
-                  <figcaption>YOLO đánh dấu</figcaption>
-                </figure>
-                <figure>
-                  <img id="resultCrop" alt="Ảnh crop lá" />
-                  <figcaption>Ảnh đưa vào CNN</figcaption>
-                </figure>
+                <figure><img id="resultOriginal" alt="Ảnh gốc" /><figcaption>Ảnh gốc</figcaption></figure>
+                <figure><img id="resultAnnotated" alt="Ảnh YOLO" /><figcaption>YOLO đánh dấu</figcaption></figure>
+                <figure><img id="resultCrop" alt="Ảnh crop lá" /><figcaption>Ảnh đưa vào CNN</figcaption></figure>
               </div>
             </article>
 
@@ -211,14 +167,8 @@
                 <p id="llmSummary">-</p>
               </div>
               <div class="llm-columns">
-                <div>
-                  <h4>Cách xử lý đề xuất</h4>
-                  <ul id="careSteps"></ul>
-                </div>
-                <div>
-                  <h4>Theo dõi tiếp</h4>
-                  <ul id="nextSteps"></ul>
-                </div>
+                <div><h4>Cách xử lý đề xuất</h4><ul id="careSteps"></ul></div>
+                <div><h4>Theo dõi tiếp</h4><ul id="nextSteps"></ul></div>
               </div>
               <div class="warning-box" id="llmWarning">-</div>
             </article>
@@ -227,10 +177,27 @@
       </main>
     </div>
 
+    <aside class="agri-chat" id="agriChat">
+      <button class="chat-toggle" id="chatToggle" type="button">Hỏi chuyên gia</button>
+      <section class="chat-panel hidden" id="chatPanel" aria-live="polite">
+        <div class="chat-head">
+          <div>
+            <strong>Chuyên gia nông nghiệp</strong>
+            <span>Hỏi nhanh về bệnh lá, chăm sóc và xử lý cây.</span>
+          </div>
+          <button id="chatClose" type="button" aria-label="Đóng chat">×</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-message bot">Xin chào, bạn có thể mô tả cây, triệu chứng trên lá, thời gian xuất hiện và điều kiện chăm sóc để tôi gợi ý hướng xử lý.</div>
+        </div>
+        <form class="chat-form" id="chatForm">
+          <textarea id="chatInput" rows="3" maxlength="1200" placeholder="Ví dụ: lá cà chua bị vàng mép và có đốm nâu, nên xử lý thế nào?"></textarea>
+          <button class="primary-button" id="chatSend" type="submit">Gửi</button>
+        </form>
+      </section>
+    </aside>
+
     <script src="./static/js/config.js"></script>
     <script src="./static/js/app.js"></script>
   </body>
 </html>
-
-
-
